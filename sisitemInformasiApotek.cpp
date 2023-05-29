@@ -11,6 +11,63 @@ struct obat {
     obat* next;
 };
 
+class Stack{
+private:
+    struct Node{
+        obat *data;
+        Node *next;
+    };
+
+    Node *top;
+    int size;
+
+public:
+    Stack(){
+        top = nullptr;
+        size = 0;
+    }
+
+    void push(obat *data){
+        Node *newNode = new Node;
+        newNode->data = data;
+        newNode->next = top;
+        top = newNode;
+        size++;
+    }
+
+    obat *pop(){
+        if (isEmpty()){
+            return nullptr;
+        }
+
+        Node *temp = top;
+        obat *data = temp->data;
+        top = top->next;
+        delete temp;
+        size--;
+
+        return data;
+    }
+
+    obat *peek(){
+        if (isEmpty()){
+            return nullptr;
+        }
+
+        return top->data;
+    }
+
+    bool isEmpty(){
+        return top == nullptr;
+    }
+
+    int getSize(){
+        return size;
+    }
+};
+
+Stack dataStack;
+
 obat* head = nullptr;
 
 void tampilkan_menu();
@@ -72,7 +129,7 @@ void tampilkan_menu(){
 }
 
 void tambahObat(){
-        obat* o = new obat;
+        obat *o = new obat;
         cout << "Masukan nama obat: ";
         cin.ignore();
         cin.getline(o->nama_obat, sizeof(o->nama_obat));
@@ -81,39 +138,35 @@ void tambahObat(){
         cout << "Masukan harga obat: ";
         cin >> o->harga;
         o->next = nullptr;
-        if(head == nullptr){
-            head = o;
-        }else{
-            obat* current = head;
-            while(current->next != nullptr){
-                current = current->next;
-            }
-            current->next = o;
-        }
+        dataStack.push(o);
         cout << "Data obat berhasil ditambahkan!!!" <<endl; 
         cout << endl;
     }
 
 void tampilkanDataObat(){
-    if(head == nullptr){  
+    if(dataStack.isEmpty()){  
         cout << "Belum ada data yang dimasukan!!!" <<endl;
     }else{
-      cout << "========== DATA OBAT ==========" <<endl;
-      cout << "NO.\tNama Obat\tStok\tHarga" <<endl;
-      obat* current = head;
+      cout << "===================== DATA OBAT =======================" <<endl;
+      cout << "NO.\tNama Obat\t\tStok\t\tHarga" <<endl;
+      Stack tempStack;
       int nomor = 1;
-      while(current != nullptr){
-        cout << nomor << "\t" << current->nama_obat << "\t\t" << current->stok << "\t" << current->harga << endl;
-        current = current->next;
+      while(!dataStack.isEmpty()){
+        obat *current = dataStack.pop();
+        cout << nomor << "\t" << current->nama_obat << "\t\t\t" << current->stok << "\t\t" << current->harga << endl;
+        tempStack.push(current);
         nomor++;
       }
+      while(!tempStack.isEmpty()){
+        obat *current = tempStack.pop();
+        dataStack.push(current);
+      }
     }
-
     cout << endl;
 }
 
 void ubahObat(){
-    if(head == nullptr){
+    if(dataStack.isEmpty()){
         cout << "Belum ada data obat yang dimasukan!!!";
         return;
     }
@@ -121,10 +174,17 @@ void ubahObat(){
         int nomor_obat;
         cout << "Masukan nomor obat yang ingin diubah: ";
         cin >> nomor_obat;
-        obat* current = head;
+
+        Stack tempStack;
+        obat *current = nullptr;
         int nomor = 1;
-        while(current != nullptr && nomor != nomor_obat){
-            current = current->next;
+        while(!dataStack.isEmpty() && current == nullptr){
+            obat *temp = dataStack.pop();
+            if(nomor == nomor_obat){
+                current = temp;
+            }else{
+                tempStack.push(temp);
+            }
             nomor++;
         }
 
@@ -145,92 +205,102 @@ void ubahObat(){
         }else{
             cout << "Nomor obat yang dimasukan salah!, Coba lagi....";
         }
+
+        while(!tempStack.isEmpty()){
+            obat *temp = tempStack.pop();
+            dataStack.push(temp);
+        }
         cout << endl;
     }
         
 void hapusObat(){
-    if(head == nullptr){
+    if(dataStack.isEmpty()){
         cout << "Belum ada data obat yang dimasukan!!!" <<endl;
         return;
     }
-
+    
      int nomor_obat;
      cout << "Masukan nomor obat yang ingin dihapus: ";
      cin >> nomor_obat;
-
-    if(nomor_obat == 1){
-       obat* temp = head;
-       head = head->next;
-       delete temp;
-       cout << "Data obat berhasil dihapus!!!" << endl;
-       return;
-    }
-    obat* current = head;
+    
+    Stack tempStack;
+    obat *current = nullptr;
     int nomor = 1;
-    while(current != nullptr && nomor != nomor_obat - 1){
-        current = current->next;
+    while(!dataStack.isEmpty() && current == nullptr){
+        obat *temp = dataStack.pop();
+        if(nomor == nomor_obat){
+            current = temp;
+        }else{
+            tempStack.push(temp);
+        }
         nomor++;
     }
 
-       if(current != nullptr && current->next != nullptr){
-         obat* temp = current->next;
-         current->next = current->next->next;
-         delete temp;  
-         cout << "Data obat berhasil dihapus!!!" << endl;
-        }else{
-            cout << "Nomor obat yang anda masukan salah!! Cobalagi....." <<endl;
-        }
+    if(current != nullptr){
+        delete current;
+       cout << "Data obat berhasil dihapus!!!" << endl;
+    }else{
+       cout << "Nomor obat yang anda masukan salah!! Cobalagi....." << endl;
+    }
+
+    while(!tempStack.isEmpty()){
+        obat *temp = tempStack.pop();
+        dataStack.push(temp);
+    }
         cout << endl;
     }
 
-void cariObat(){
-    if(head == nullptr){
-        cout << "Belum ada data obat yang diamasukan!!!" <<endl;
+    void cariObat(){
+        if (dataStack.isEmpty()){
+        cout << "Belum ada data obat yang dimasukan!!!" << endl;
         return;
-    }
+        }
 
         char keyword[100];
-         cout << "Masukan nama obat yang ingin diacari: ";
-         cin.ignore();
-         cin.getline(keyword, sizeof(keyword));
-         cout << "========== HASIL PENCARIAN ==========" <<endl;
-         cout << "NO.\tNama Obat\tStok\tHarga" << endl;
-         obat* current = head;
-         int count = 0;
-         int nomor = 1;
-         while(current != nullptr){
-            if(strstr(current->nama_obat,keyword)){
-                count++;
-                cout << nomor << "\t" << current->nama_obat << "\t\t" << current->stok << "\t" << current->harga << endl;
-            }
-            current = current->next;
-            nomor++;
-         }
+        cout << "Masukan nama obat yang ingin diacari: ";
+        cin.ignore();
+        cin.getline(keyword, sizeof(keyword));
+        cout << "========== HASIL PENCARIAN ==========" << endl;
+        cout << "NO.\tNama Obat\tStok\tHarga" << endl;
 
-         if(count == 0){
-            cout << "Obat tidak ditemukan!!!" << endl;
-         }
+        Stack tempStack;
+        int nomor = 1;
+        while (!dataStack.isEmpty()){
+        obat *current = dataStack.pop();
+        if (strstr(current->nama_obat, keyword)){
+            cout << nomor << "\t" << current->nama_obat << "\t\t" << current->stok << "\t" << current->harga << endl;
+        }
+        tempStack.push(current);
+        nomor++;
+        }
 
-    cout << endl;
-}
+        while (!tempStack.isEmpty()){
+        obat *temp = tempStack.pop();
+        dataStack.push(temp);
+        }
+
+        cout << endl;
+    }
 
 void simpanObat_txt(){
-    int jumlahObat = 0;
-    obat* current = head;
-    while(current != nullptr){
-        jumlahObat++;
-        current = current->next;
-    }
+    int jumlahObat = dataStack.getSize();
 
     ofstream fout;
     fout.open("data_obat.txt");
     fout << jumlahObat <<endl;
-    current = head;
-    while(current != nullptr){
+
+    Stack tempStack;
+    while(!dataStack.isEmpty()){
+        obat *current = dataStack.pop();
         fout << current->nama_obat <<endl;
         fout << current->stok <<endl;
         fout << current->harga <<endl;
-        current = current->next;
+        tempStack.push(current);
+    }
+
+    while(!tempStack.isEmpty()){
+        obat *current = tempStack.pop();
+        dataStack.push(current);
     }
    
     fout.close();
@@ -246,21 +316,14 @@ void muatDataObat_txt(){
     if(fin.is_open()){
         fin >> jumlahObat;
         fin.ignore();
-        obat* previous = nullptr;
+
         for(int i = 0; i < jumlahObat; i++){
-            obat* o = new obat;
+            obat *o = new obat;
             fin.getline(o->nama_obat, sizeof(o->nama_obat));
             fin >> o->stok;
             fin >> o->harga;
             fin.ignore();
-            o->next = nullptr;
-
-            if(previous == nullptr){
-                head = o;
-            }else{
-                previous->next = o;
-            }
-            previous = o;
+            dataStack.push(o);
         }
         cout << "File data obat ditemukan!!!" <<endl;
     }else{

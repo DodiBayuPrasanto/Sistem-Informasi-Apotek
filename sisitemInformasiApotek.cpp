@@ -1,6 +1,8 @@
 #include <iostream>
 #include <fstream>
 #include <cstring>
+#include <vector>
+#include <string>
 
 using namespace std;
 
@@ -59,9 +61,50 @@ void tambahObat();
 void tampilkanDataObat();
 void ubahObat();
 void hapusObat();
-void cariObat();
+void cariObat() ;
+void rakObat();
 void simpanObat_txt();
 void muatDataObat_txt();
+void rakObat();
+
+class Graph{
+private:
+    int vertices;
+    vector<vector<int>> graph;
+    vector<string> nodeNames;
+
+public:
+    Graph(int vertices){
+        this->vertices = vertices;
+        graph.resize(vertices, vector<int>(vertices, 0));
+        nodeNames.resize(vertices);
+    }
+
+    void addEdge(int source, int destination, int weight){
+        graph[source][destination] = weight;
+    }
+
+    void printGraph(){
+        cout << "      ";
+        for (int i = 0; i < vertices; ++i){
+            cout << nodeNames[i] << "     ";
+        }
+        cout << endl;
+
+        for (int i = 0; i < vertices; ++i){
+            cout << nodeNames[i] << "     ";
+            for (int j = 0; j < vertices; ++j)
+            {
+                cout << graph[i][j] << "         ";
+            }
+            cout << endl;
+        }
+    }
+
+    void setNodeNames(const vector<string> &names){
+        nodeNames = names;
+    }
+};
 
 int main(){
     muatDataObat_txt();
@@ -69,17 +112,17 @@ int main(){
     return 0;
 }
 
-void tampilkan_menu()
-{
+void tampilkan_menu(){
     int pilihan;
     do{
         cout << "                SISTEM INFORMASI APOTEK         " << endl;
         cout << "1. Tambah data obat" << endl;
         cout << "2. Tampilkan data obat" << endl;
         cout << "3. Ubah data obat" << endl;
-        cout << "4. Hapus data obat" << endl;
+        cout << "4. Hapus data obat" << endl; 
         cout << "5. Cari data obat" << endl;
-        cout << "6. Keluar" << endl;
+        cout << "6. Ambil Stok obat" << endl;
+        cout << "7. Keluar" << endl;
         cout << "Masukan pilihan: ";
         cin >> pilihan;
         cout << endl;
@@ -98,13 +141,16 @@ void tampilkan_menu()
             simpanObat_txt();
             break;
         case 4:
-            hapusObat();
+            hapusObat(); 
             simpanObat_txt();
             break;
         case 5:
             cariObat();
             break;
         case 6:
+            rakObat();
+            break;
+        case 7:
             cout << "Terimakasih!  " << endl;
             break;
         default:
@@ -149,7 +195,6 @@ void tampilkanDataObat(){
             dataStack.push(temp);
         }
     }
-
     cout << endl;
 }
 
@@ -206,41 +251,23 @@ void hapusObat(){
         return;
     }
 
-    int nomor_obat;
-    cout << "Masukan nomor obat yang ingin dihapus: ";
-    cin >> nomor_obat;
+    obat *current = dataStack.pop(); 
 
-    Stack tempStack;
-    obat *current = nullptr;
-    int nomor = 1;
-    while (!dataStack.isEmpty() && nomor != nomor_obat){
-        obat *temp = dataStack.pop();
-        tempStack.push(temp);
-        nomor++;
-    }
+    cout << "Data obat yang diHapus:" << endl;
+    cout << "Nama Obat: " << current->nama_obat << endl;
+    cout << "Stok Obat: " << current->stok << endl;
+    cout << "Harga Obat: " << current->harga << endl;
+    cout << endl;
+    cout << "Data obat berhasil diHapus!!!" << endl;
 
-    if (!dataStack.isEmpty()){
-        current = dataStack.pop();
-        cout << "Data obat yang dihapus:" << endl;
-        cout << "Nama Obat: " << current->nama_obat << endl;
-        cout << "Stok Obat: " << current->stok << endl;
-        cout << "Harga Obat: " << current->harga << endl;
+    delete current; 
 
-        cout << "Data obat berhasil dihapus!!!" << endl;
-
-        while (!tempStack.isEmpty()){
-            obat *temp = tempStack.pop();
-            dataStack.push(temp);
-        }
-    }else{
-        cout << "Nomor obat yang anda masukan salah!! Cobalagi....." << endl;
-    }
     cout << endl;
 }
 
 void cariObat(){
     if (dataStack.isEmpty()){
-        cout << "Belum ada data obat yang diamasukan!!!" << endl;
+        cout << "Belum ada data obat yang dimasukan!!!" << endl;
         return;
     }
 
@@ -302,7 +329,44 @@ void simpanObat_txt(){
     }
 
     fout.close();
-    cout << "Data obat berhasil disimpan ke dalam file data_Obat.txt" << endl;
+    cout << "Data obat berhasil disimpan ke dalam file data_obat.txt" << endl;
+
+    cout << endl;
+}
+
+void rakObat(){
+    cout << endl;
+    int rak;
+    cout << "Masukan jumlah simpul: ";
+    cin >> rak;
+
+    Graph graph(rak);
+    cout << endl;
+
+    vector<string> nodeNames(rak);
+    for(int i = 0; i < rak; i++){
+        cout << "Masukan Nama Kota Ke-" << i + 1 << ": ";
+        cin >> nodeNames[i];
+    }
+    graph.setNodeNames(nodeNames);
+    cout << endl;
+
+    for(int i = 0; i < rak; i++){
+        for(int j = 0; j < rak; j++){
+            int jarak;
+            cout << "Masukan Jarak " << nodeNames[i] << " ke " << nodeNames[j] << ": ";
+            cin >> jarak;
+            graph.addEdge(i, j, jarak);
+        }
+    }
+    cout << endl;
+    cout << "Rak Obat" <<endl;
+    cout << "-----------------------------------------" <<endl;
+    graph.printGraph();
+
+    cout << endl;
+    cout << endl;
+    tampilkan_menu();
 
     cout << endl;
 }

@@ -381,7 +381,6 @@ void rakObat(){
 
     cout << endl;
     cout << endl;
-    tampilkan_menu();
 
     cout << endl;
 }

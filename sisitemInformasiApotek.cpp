@@ -1,8 +1,8 @@
 #include <iostream>
-#include <fstream>
-#include <cstring>
-#include <vector>
-#include <string>
+#include <fstream> //berfungsi unutk input/output pada file
+#include <cstring> //berfungsi untuk operasi terkait string, mencari substring
+#include <vector>  //berfungsi untuk menggunaan container vector
+#include <string>  //berfungsi untuk menggunakan tipe data string.
 
 using namespace std;
 
@@ -157,7 +157,7 @@ void tampilkan_menu(){
             cout << "Pilihan yang dimasukan salah!!!" << endl
                  << endl;
         }
-    } while (pilihan != 6);
+    } while (pilihan != 7);
 }
 
 void tambahObat(){
@@ -251,16 +251,31 @@ void hapusObat(){
         return;
     }
 
-    obat *current = dataStack.pop(); 
+    Stack tempStack;
 
-    cout << "Data obat yang diHapus:" << endl;
+    // Pindahkan elemen-elemen dari dataStack ke tempStack
+    // sampai hanya satu elemen yang tersisa di dataStack
+    while (dataStack.getSize() > 1){
+        obat *temp = dataStack.pop();
+        tempStack.push(temp);
+    }
+
+    obat *current = dataStack.pop(); // Hapus data paling bawah
+
+    cout << "Data obat yang dihapus:" << endl;
     cout << "Nama Obat: " << current->nama_obat << endl;
     cout << "Stok Obat: " << current->stok << endl;
     cout << "Harga Obat: " << current->harga << endl;
     cout << endl;
-    cout << "Data obat berhasil diHapus!!!" << endl;
+    cout << "Data obat berhasil dihapus!!!" << endl;
 
-    delete current; 
+    delete current;
+
+    // Kembalikan elemen-elemen yang sebelumnya dipindahkan ke tempStack ke dataStack
+    while (!tempStack.isEmpty()){
+        obat *temp = tempStack.pop();
+        dataStack.push(temp);
+    }
 
     cout << endl;
 }

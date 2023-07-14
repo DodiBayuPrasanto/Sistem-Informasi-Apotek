@@ -1,8 +1,9 @@
 #include <iostream>
-#include <fstream> //berfungsi unutk input/output pada file
-#include <cstring> //berfungsi untuk operasi terkait string, mencari substring
-#include <vector>  //berfungsi untuk menggunaan container vector
-#include <string>  //berfungsi untuk menggunakan tipe data string.
+#include <fstream>
+#include <cstring>
+#include <vector>
+#include <string>
+#include <queue>
 
 using namespace std;
 
@@ -55,14 +56,16 @@ public:
 };
 
 Stack dataStack;
+queue<obat *> stokObatQueue;
+queue<int> stokDiambilQueue; // Menyimpan jumlah stok yang sudah diambil
 
 void tampilkan_menu();
 void tambahObat();
 void tampilkanDataObat();
 void ubahObat();
 void hapusObat();
-void cariObat() ;
-void rakObat();
+void cariObat();
+void hapusStokObat();
 void simpanObat_txt();
 void muatDataObat_txt();
 void rakObat();
@@ -93,8 +96,7 @@ public:
 
         for (int i = 0; i < vertices; ++i){
             cout << nodeNames[i] << "     ";
-            for (int j = 0; j < vertices; ++j)
-            {
+            for (int j = 0; j < vertices; ++j){
                 cout << graph[i][j] << "         ";
             }
             cout << endl;
@@ -119,10 +121,11 @@ void tampilkan_menu(){
         cout << "1. Tambah data obat" << endl;
         cout << "2. Tampilkan data obat" << endl;
         cout << "3. Ubah data obat" << endl;
-        cout << "4. Hapus data obat" << endl; 
+        cout << "4. Hapus data obat" << endl;
         cout << "5. Cari data obat" << endl;
-        cout << "6. Ambil Stok obat" << endl;
-        cout << "7. Keluar" << endl;
+        cout << "6. Hapus Stok Obat" << endl;
+        cout << "7. Rak Obat" << endl;
+        cout << "8. Keluar" << endl;
         cout << "Masukan pilihan: ";
         cin >> pilihan;
         cout << endl;
@@ -141,23 +144,27 @@ void tampilkan_menu(){
             simpanObat_txt();
             break;
         case 4:
-            hapusObat(); 
+            hapusObat();
             simpanObat_txt();
             break;
         case 5:
             cariObat();
             break;
         case 6:
-            rakObat();
+            hapusStokObat();
+            simpanObat_txt();
             break;
         case 7:
+            rakObat();
+            break;
+        case 8:
             cout << "Terimakasih!  " << endl;
             break;
         default:
             cout << "Pilihan yang dimasukan salah!!!" << endl
                  << endl;
         }
-    } while (pilihan != 7);
+    } while (pilihan != 8);
 }
 
 void tambahObat(){
@@ -170,6 +177,8 @@ void tambahObat(){
     cout << "Masukan harga obat: ";
     cin >> o->harga;
     dataStack.push(o);
+    stokObatQueue.push(o);
+    stokDiambilQueue.push(0); // Jumlah stok yang diambil diinisialisasi dengan 0
     cout << "Data obat berhasil ditambahkan!!!" << endl;
     cout << endl;
 }
@@ -185,7 +194,8 @@ void tampilkanDataObat(){
         int nomor = 1;
         while (!dataStack.isEmpty()){
             obat *current = dataStack.pop();
-            cout << nomor << "\t" << current->nama_obat << "\t\t\t" << current->stok << "\t\t" << current->harga << endl;
+            int stokDiambil = stokDiambilQueue.front();
+            cout << nomor << "\t" << current->nama_obat << "\t\t\t" << current->stok - stokDiambil << "\t\t" << current->harga << endl;
             tempStack.push(current);
             nomor++;
         }
@@ -222,6 +232,8 @@ void ubahObat(){
         cout << "Nama Obat: " << current->nama_obat << endl;
         cout << "Stok Obat: " << current->stok << endl;
         cout << "Harga Obat: " << current->harga << endl;
+
+        cout << endl;
 
         cout << "Masukan nama obat baru: ";
         cin.ignore();
@@ -268,6 +280,22 @@ void hapusObat(){
     cout << "Harga Obat: " << current->harga << endl;
     cout << endl;
     cout << "Data obat berhasil dihapus!!!" << endl;
+
+    // Hapus data obat dari queue stokObatQueue
+    queue<obat *> tempQueue;
+    queue<int> tempStokDiambilQueue;
+    while (!stokObatQueue.empty()){
+        obat *temp = stokObatQueue.front();
+        int stokDiambil = stokDiambilQueue.front();
+        stokObatQueue.pop();
+        stokDiambilQueue.pop();
+        if (temp != current){
+            tempQueue.push(temp);
+            tempStokDiambilQueue.push(stokDiambil);
+        }
+    }
+    stokObatQueue = tempQueue;
+    stokDiambilQueue = tempStokDiambilQueue;
 
     delete current;
 
@@ -319,6 +347,58 @@ void cariObat(){
     cout << endl;
 }
 
+void hapusStokObat(){
+    if (dataStack.isEmpty()){
+        cout << "Belum ada data obat yang dimasukkan!!!" << endl;
+        return;
+    }
+
+    int nomor_obat;
+    int jumlah_stok;
+    cout << "Masukkan nomor obat: ";
+    cin >> nomor_obat;
+    cout << "Masukkan jumlah stok yang akan dihapus: ";
+    cin >> jumlah_stok;
+
+    Stack tempStack;
+    queue<int> tempStokDiambilQueue;
+    int nomor = 1;
+    bool found = false;
+
+    while (!dataStack.isEmpty() && nomor <= nomor_obat){
+        obat *temp = dataStack.pop();
+        int stokDiambil = stokDiambilQueue.front();
+        if (nomor == nomor_obat){
+            found = true;
+            if (temp->stok - stokDiambil >= jumlah_stok){
+                stokDiambilQueue.pop();
+                stokDiambilQueue.push(stokDiambil + jumlah_stok);
+                temp->stok -= jumlah_stok; // Mengurangi stok pada data obat
+                tempStokDiambilQueue.push(stokDiambil + jumlah_stok);
+                cout << "Stok obat '" << temp->nama_obat << "' berhasil dihapus sebanyak " << jumlah_stok << " stok"<< endl;
+            }else{
+                cout << "Stok obat '" << temp->nama_obat << "' tidak mencukupi!" << endl;
+                tempStokDiambilQueue.push(stokDiambil);
+            }
+        }else{
+            tempStokDiambilQueue.push(stokDiambil);
+        }
+        tempStack.push(temp);
+        nomor++;
+    }
+
+    while (!tempStack.isEmpty()){
+        obat *temp = tempStack.pop();
+        dataStack.push(temp);
+    }
+
+    if (!found){
+        cout << "Nomor obat yang dimasukkan salah!" << endl;
+    }
+
+    cout << endl;
+}
+
 void simpanObat_txt(){
     if (dataStack.isEmpty()){
         cout << "Belum ada data obat yang dimasukan!!!" << endl;
@@ -359,15 +439,15 @@ void rakObat(){
     cout << endl;
 
     vector<string> nodeNames(rak);
-    for(int i = 0; i < rak; i++){
+    for (int i = 0; i < rak; i++){
         cout << "Masukan Nama Kota Ke-" << i + 1 << ": ";
         cin >> nodeNames[i];
     }
     graph.setNodeNames(nodeNames);
     cout << endl;
 
-    for(int i = 0; i < rak; i++){
-        for(int j = 0; j < rak; j++){
+    for (int i = 0; i < rak; i++){
+        for (int j = 0; j < rak; j++){
             int jarak;
             cout << "Masukan Jarak " << nodeNames[i] << " ke " << nodeNames[j] << ": ";
             cin >> jarak;
@@ -375,12 +455,9 @@ void rakObat(){
         }
     }
     cout << endl;
-    cout << "Rak Obat" <<endl;
-    cout << "-----------------------------------------" <<endl;
+    cout << "Rak Obat" << endl;
+    cout << "-----------------------------------------" << endl;
     graph.printGraph();
-
-    cout << endl;
-    cout << endl;
 
     cout << endl;
 }
@@ -394,6 +471,7 @@ void muatDataObat_txt(){
         fin.ignore();
 
         Stack tempStack;
+        queue<int> tempStokDiambilQueue;
         for (int i = 0; i < jumlahObat; i++){
             obat *o = new obat;
             fin.getline(o->nama_obat, sizeof(o->nama_obat));
@@ -402,12 +480,16 @@ void muatDataObat_txt(){
             fin.ignore();
             o->next = nullptr;
             tempStack.push(o);
+            stokObatQueue.push(o);
+            tempStokDiambilQueue.push(0); // Jumlah stok yang diambil diinisialisasi dengan 0
         }
 
         while (!tempStack.isEmpty()){
             obat *temp = tempStack.pop();
             dataStack.push(temp);
         }
+
+        stokDiambilQueue = tempStokDiambilQueue;
 
         cout << "File data obat ditemukan!!!" << endl;
     }else{
